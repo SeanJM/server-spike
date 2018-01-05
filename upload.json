@@ -1,0 +1,10 @@
+{
+  "server"  : "ssh.phx.nearlyfreespeech.net",
+  "username": "seanjm_seanjm",
+  "root"    : "/home/protected/server/",
+  "files"   : [
+    "scripts/",
+    "index.js",
+    "package.json"
+  ]
+}
