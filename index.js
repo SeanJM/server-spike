@@ -12,13 +12,15 @@ const cookieSession = require("cookie-session");
 
 const logger        = require("./scripts/helpers/logger");
 const promisify     = require("./scripts/helpers/promisify");
+const stat          = promisify(fs.stat);
+const config        = require("./spike.config");
 
-function load(folder) {
-  const spike  = require(path.join(folder, "spike.js"));
+function load(path) {
+  const spike  = require(path.join(path, "spike.js"));
 
   logger({
     type   : "START",
-    module : path.basename(folder)
+    module : path.basename(path)
   });
 
   spike(app);
@@ -37,34 +39,17 @@ app.use(cookieSession({
   }())
 }));
 
-app.use(
-  bodyParser.urlencoded({
-    extended: true
-  })
-);
-
-app.use(
-  bodyParser.json()
-);
-
+app.use(bodyParser.urlencoded({extended: true }));
+app.use(bodyParser.json());
 app.listen(port);
 
-promisify(fs.readdir, "./apps")
-  .then(folders => {
-    folders
-      .map(name => path.resolve(path.join("./apps", name)))
-      .filter(file => !/\/\./.test(file))
-      .forEach(folder => {
-        if (fs.existsSync(path.join(folder, "spike.js"))) {
-          load(folder);
-        } else {
-          console.log("WARNING: \"" + folder + "\" is missing \"spike.js\" file");
-        }
-      });
-  })
-  .catch(err => {
-    console.log(err);
-  });
+config.load.forEach(path => {
+  stat(path.join(path, "spike.js"))
+    .then(() => load(path))
+    .catch(() => {
+      console.log("WARNING: \"" + path + "\" is missing \"spike.js\" file");
+    });
+});
 
 logger({
   type    : "START",
